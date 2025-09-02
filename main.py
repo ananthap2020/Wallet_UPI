@@ -5,24 +5,20 @@ from typing import List
 from database import engine, SessionLocal, Base
 from models import User, Transaction
 
-# Create tables
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Wallet API", description="User Wallet Management APIs", version="1.0")
 
 
-# Dependency to get DB session
+
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-
-
-# ==============================
-# Schemas
-# ==============================
+        
 class UserSchema(BaseModel):
     id: int
     name: str
@@ -60,15 +56,10 @@ class TransactionSchema(BaseModel):
     id: int
     user_id: int
     amount: float
-    type: str  # "credit" or "debit"
+    type: str  
 
     class Config:
         orm_mode = True
-
-
-# ==============================
-# APIs
-# ==============================
 
 @app.get("/users", response_model=List[UserSchema])
 def list_users(db: Session = Depends(get_db)):
@@ -85,7 +76,6 @@ def update_wallet(user_id: int, payload: WalletUpdateSchema, db: Session = Depen
 
     user.wallet_balance += payload.amount
 
-    # Record transaction
     txn_type = "credit" if payload.amount > 0 else "debit"
     txn = Transaction(user_id=user_id, amount=payload.amount, type=txn_type)
     db.add(txn)
